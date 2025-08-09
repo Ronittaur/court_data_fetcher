@@ -41,21 +41,17 @@ It also stores query logs and raw HTML responses in the database for reference.
 1. Clone the repository```bash
 git clone https://github.com/<your-username>/court_data_fetcher.git
 cd court_data_fetcher
-2. Install dependencies
-bash
-Copy code
+
+3. Install dependencies
 npm install
-3. Environment variables
+
+5. Environment variables
 Create a .env file in the root directory (see .env.example for reference):
-ini
-Copy code
 PORT=5000
 DATABASE_URL=sqlite:./database/court_data.db
 COURT_URL=https://delhihighcourt.nic.in/
 
-4. Run the app
-bash
-Copy code
+6. Run the app
 node server.js
 The app will be available at: arduino
 
