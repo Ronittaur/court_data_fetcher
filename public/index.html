@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Court Data Fetcher</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            margin-top: 50px;
+            padding: 40px;
+        }
+        
+        .header-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .header-section h1 {
+            color: #2c3e50;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .header-section p {
+            color: #6c757d;
+            font-size: 1.1rem;
+        }
+        
+        .form-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        
+        .form-control, .form-select {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 12px 15px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .results-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .case-detail {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .case-detail h6 {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .case-detail p {
+            margin: 0;
+            color: #6c757d;
+        }
+        
+        .pdf-link {
+            display: inline-block;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            text-decoration: none;
+            margin: 5px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .pdf-link:hover {
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(40, 167, 69, 0.4);
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .alert {
+            border: none;
+            border-radius: 10px;
+            padding: 15px 20px;
+        }
+        
+        .history-section {
+            margin-top: 40px;
+        }
+        
+        .history-item {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .captcha-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        
+        .captcha-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="main-container">
+                    <!-- Header -->
+                    <div class="header-section">
+                        <h1><i class="fas fa-gavel"></i> Court Data Fetcher</h1>
+                        <p>Search and retrieve case details from Delhi High Court</p>
+                    </div>
+
+                    <!-- Search Form -->
+                    <div class="form-card">
+                        <h3 class="mb-4"><i class="fas fa-search"></i> Case Search</h3>
+                        <form id="caseSearchForm">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Case Type</label>
+                                    <select class="form-select" id="caseType" required>
+                                        <option value="">Select Case Type</option>
+                                        <option value="CRL.A">Criminal Appeal</option>
+                                        <option value="CRL.REV">Criminal Revision</option>
+                                        <option value="CW">Civil Writ</option>
+                                        <option value="CS">Civil Suit</option>
+                                        <option value="FAO">First Appeal from Order</option>
+                                        <option value="RSA">Regular Second Appeal</option>
+                                        <option value="ARB.P">Arbitration Petition</option>
+                                        <option value="CM">Civil Miscellaneous</option>
+                                        <option value="MAT.APP">Matrimonial Appeal</option>
+                                        <option value="BAIL.APPLN">Bail Application</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Case Number</label>
+                                    <input type="text" class="form-control" id="caseNumber" 
+                                           placeholder="e.g., 1234" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Filing Year</label>
+                                    <select class="form-select" id="filingYear" required>
+                                        <option value="">Select Year</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="text-center mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-search"></i> Search Case
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Loading Spinner -->
+                    <div class="loading-spinner" id="loadingSpinner">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Searching case details...</p>
+                    </div>
+
+                    <!-- Results -->
+                    <div class="results-card" id="resultsCard">
+                        <h3 class="mb-4"><i class="fas fa-file-alt"></i> Case Details</h3>
+                        <div id="caseResults"></div>
+                    </div>
+
+                    <!-- History Section -->
+                    <div class="history-section">
+                        <h3 class="mb-4"><i class="fas fa-history"></i> Recent Searches</h3>
+                        <div id="searchHistory"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CAPTCHA Modal -->
+    <div class="captcha-modal" id="captchaModal">
+        <div class="captcha-content">
+            <h4>CAPTCHA Verification Required</h4>
+            <p>Please solve the CAPTCHA to continue:</p>
+            <div class="mb-3 text-center">
+                <img id="captchaImage" src="" alt="CAPTCHA" style="display: none; max-width: 200px; border: 1px solid #ccc; padding: 5px;">
+            </div>
+            <div class="mb-3">
+        <input type="text" class="form-control" id="captchaInput" 
+               placeholder="Enter CAPTCHA text">
+    </div>
+            <div class="text-center">
+                <button class="btn btn-primary" onclick="submitCaptcha()">Submit</button>
+                <button class="btn btn-secondary ms-2" onclick="closeCaptchaModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let currentQueryId = null;
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeYearDropdown();
+            loadSearchHistory();
+            
+            document.getElementById('caseSearchForm').addEventListener('submit', handleFormSubmit);
+        });
+
+        // Initialize year dropdown with current and past years
+        function initializeYearDropdown() {
+            const yearSelect = document.getElementById('filingYear');
+            const currentYear = new Date().getFullYear();
+            
+            for (let year = currentYear; year >= 2000; year--) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            }
+        }
+
+        // Handle form submission
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            
+            const formData = {
+                caseType: document.getElementById('caseType').value,
+                caseNumber: document.getElementById('caseNumber').value,
+                filingYear: document.getElementById('filingYear').value
+            };
+
+            if (!formData.caseType || !formData.caseNumber || !formData.filingYear) {
+                showAlert('Please fill in all required fields.', 'danger');
+                return;
+            }
+
+            showLoadingSpinner(true);
+            hideResults();
+
+            try {
+                const response = await fetch('/api/cases/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displayResults(data.data);
+                    loadSearchHistory(); // Refresh history
+                } else if (data.requiresCaptcha) {
+                    currentQueryId = data.queryId;
+                    showCaptchaModal(data.captchaImage);
+                }else {
+                    showAlert(data.error || 'Failed to fetch case details', 'danger');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Network error. Please try again.', 'danger');
+            } finally {
+                showLoadingSpinner(false);
+            }
+        }
+
+        // Display search results
+        function displayResults(caseData) {
+            const resultsDiv = document.getElementById('caseResults');
+            
+            let pdfLinksHtml = '';
+            if (caseData.pdfLinks && caseData.pdfLinks.length > 0) {
+                pdfLinksHtml = `
+                    <div class="case-detail">
+                        <h6><i class="fas fa-file-pdf"></i> Available Documents</h6>
+                        <div class="mt-2">
+                            ${caseData.pdfLinks.map(pdf => 
+                                `<a href="/api/cases/download-pdf?url=${encodeURIComponent(pdf.url)}" 
+                                   class="pdf-link" target="_blank">
+                                    <i class="fas fa-download"></i> ${pdf.text || 'Download PDF'}
+                                 </a>`
+                            ).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            let ordersHtml = '';
+            if (caseData.orders && caseData.orders.length > 0) {
+                ordersHtml = `
+                    <div class="case-detail">
+                        <h6><i class="fas fa-list"></i> Order History</h6>
+                        <div class="mt-2">
+                            ${caseData.orders.slice(0, 5).map((order, index) => 
+                                `<div class="mb-2 p-2 bg-white rounded border-start border-primary border-3">
+                                    <strong>Order ${index + 1}:</strong> ${order.description || 'No description available'}
+                                    ${order.date ? `<br><small class="text-muted">Date: ${order.date}</small>` : ''}
+                                 </div>`
+                            ).join('')}
+                            ${caseData.orders.length > 5 ? `<small class="text-muted">... and ${caseData.orders.length - 5} more orders</small>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            resultsDiv.innerHTML = `
+                <div class="case-detail">
+                    <h6><i class="fas fa-balance-scale"></i> Case Title</h6>
+                    <p>${caseData.title}</p>
+                </div>
+                
+                <div class="case-detail">
+                    <h6><i class="fas fa-users"></i> Parties</h6>
+                    <p>${caseData.parties}</p>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="case-detail">
+                            <h6><i class="fas fa-calendar-alt"></i> Filing Date</h6>
+                            <p>${caseData.filingDate}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="case-detail">
+                            <h6><i class="fas fa-clock"></i> Next Hearing</h6>
+                            <p>${caseData.nextHearingDate}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="case-detail">
+                    <h6><i class="fas fa-user-tie"></i> Judge/Bench</h6>
+                    <p>${caseData.judgeName}</p>
+                </div>
+                
+                ${pdfLinksHtml}
+                ${ordersHtml}
+                
+                <div class="text-center mt-4">
+                    <button class="btn btn-outline-primary" onclick="printResults()">
+                        <i class="fas fa-print"></i> Print Details
+                    </button>
+                    <button class="btn btn-outline-success ms-2" onclick="exportToJson()">
+                        <i class="fas fa-download"></i> Export JSON
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('resultsCard').style.display = 'block';
+            document.getElementById('resultsCard').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Load and display search history
+        async function loadSearchHistory() {
+            try {
+                const response = await fetch('/api/cases/history');
+                const data = await response.json();
+                
+                if (data.success && data.data.length > 0) {
+                    const historyDiv = document.getElementById('searchHistory');
+                    
+                    historyDiv.innerHTML = data.data.map(item => `
+                        <div class="history-item">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h6 class="mb-1">${item.case_type} ${item.case_number}/${item.filing_year}</h6>
+                                    <p class="mb-1 text-muted">${item.case_title || 'Case Title Not Available'}</p>
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock"></i> ${new Date(item.timestamp).toLocaleString()}
+                                    </small>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <span class="status-badge status-${item.status}">
+                                        ${item.status}
+                                    </span>
+                                    ${item.status === 'success' ? 
+                                        `<br><small class="text-muted mt-1 d-block">
+                                            Parties: ${item.parties || 'N/A'}
+                                        </small>` : ''
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    document.getElementById('searchHistory').innerHTML = `
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-history fa-3x mb-3"></i>
+                            <p>No search history available</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading history:', error);
+            }
+        }
+
+        // CAPTCHA modal functions
+    function showCaptchaModal(captchaImageBase64 = null) {
+        const modal = document.getElementById('captchaModal');
+        const captchaImg = document.getElementById('captchaImage');
+            
+            if (captchaImageBase64) {
+                captchaImg.src = `data:image/png;base64,${captchaImageBase64}`;
+                captchaImg.style.display = 'block';
+            } else {
+                captchaImg.style.display = 'none';
+            }
+            
+            modal.style.display = 'block';
+        }
+
+        function closeCaptchaModal() {
+            document.getElementById('captchaModal').style.display = 'none';
+            document.getElementById('captchaInput').value = '';
+        }
+
+async function submitCaptcha() {
+    const captchaText = document.getElementById('captchaInput').value.trim();
+    
+    if (!captchaText) {
+        showAlert('Please enter the CAPTCHA text.', 'warning');
+        return;
+    }
+
+    try {
+        showLoadingSpinner(true);
+        
+        const response = await fetch('/api/cases/captcha', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                queryId: currentQueryId,
+                captchaText: captchaText
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            closeCaptchaModal();
+            if (data.data) {
+                // Case data was retrieved successfully
+                displayResults(data.data);
+                showAlert('CAPTCHA solved! Case details retrieved successfully.', 'success');
+            } else {
+                showAlert('CAPTCHA submitted successfully.', 'success');
+            }
+        } else {
+            showAlert(data.error || 'CAPTCHA verification failed', 'danger');
+        }
+
+    } catch (error) {
+        console.error('Error submitting CAPTCHA:', error);
+        showAlert('Network error. Please try again.', 'danger');
+    } finally {
+        showLoadingSpinner(false);
+    }
+}
+
+        // Utility functions
+        function showLoadingSpinner(show) {
+            document.getElementById('loadingSpinner').style.display = show ? 'block' : 'none';
+        }
+
+        function hideResults() {
+            document.getElementById('resultsCard').style.display = 'none';
+        }
+
+        function showAlert(message, type) {
+            // Remove existing alerts
+            const existingAlerts = document.querySelectorAll('.alert');
+            existingAlerts.forEach(alert => alert.remove());
+
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            const container = document.querySelector('.main-container');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+
+        function printResults() {
+            const printContent = document.getElementById('caseResults').innerHTML;
+            const printWindow = window.open('', '_blank');
+            
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Case Details - Print</title>
+                    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        .case-detail { margin-bottom: 15px; }
+                        @media print { 
+                            .btn { display: none; }
+                            body { margin: 0; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h2>Court Case Details</h2>
+                    <p><strong>Generated on:</strong> ${new Date().toLocaleString()}</p>
+                    <hr>
+                    ${printContent}
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function exportToJson() {
+            const resultsDiv = document.getElementById('caseResults');
+            if (!resultsDiv.innerHTML.trim()) {
+                showAlert('No case data to export', 'warning');
+                return;
+            }
+
+            // Extract case data from the displayed results
+            const caseData = {
+                exportDate: new Date().toISOString(),
+                caseType: document.getElementById('caseType').value,
+                caseNumber: document.getElementById('caseNumber').value,
+                filingYear: document.getElementById('filingYear').value,
+                // Note: In a real application, you'd store the original data
+                // and export that instead of parsing from HTML
+                note: 'This is a simplified export. Full case data should be stored separately.'
+            };
+
+            const dataStr = JSON.stringify(caseData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `case_${caseData.caseType}_${caseData.caseNumber}_${caseData.filingYear}.json`;
+            link.click();
+        }
+
+        // Handle Enter key in CAPTCHA input
+        document.getElementById('captchaInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                submitCaptcha();
+            }
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('captchaModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeCaptchaModal();
+            }
+        });
+    </script>
+</body>
+</html>
